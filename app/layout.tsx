@@ -18,7 +18,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Simulation Bridge Console",
   description:
-    "Configura e controlla Simulation Bridge e gli agent con un'unica interfaccia.",
+    "Configure and control Simulation Bridge and its agents from a single interface.",
 };
 
 export default function RootLayout({
@@ -27,7 +27,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="it">
+    <html lang="en">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-white text-zinc-900`}
       >
@@ -37,10 +37,10 @@ export default function RootLayout({
             <div className="border-b border-zinc-200 bg-white px-5 py-3 md:hidden">
               <nav className="flex flex-wrap gap-4 text-sm">
                 <Link className="font-medium" href="/config/simulation-bridge">
-                  Configurazione
+                  Configuration
                 </Link>
                 <Link className="font-medium" href="/execution">
-                  Esecuzione
+                  Execution
                 </Link>
               </nav>
             </div>

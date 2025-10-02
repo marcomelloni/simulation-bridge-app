@@ -99,7 +99,7 @@ export default function MatlabConfigPage() {
           setPath(typeof data.path === "string" ? data.path : "");
         }
       } catch (err) {
-        console.error("Impossibile caricare la configurazione Matlab", err);
+        console.error("Unable to load Matlab configuration", err);
       }
     };
 
@@ -121,9 +121,7 @@ export default function MatlabConfigPage() {
 
       const data = await response.json().catch(() => ({}));
       if (!response.ok) {
-        setError(
-          data.error ?? "Errore durante il salvataggio della configurazione."
-        );
+        setError(data.error ?? "Error saving configuration.");
         return;
       }
 
@@ -131,13 +129,13 @@ export default function MatlabConfigPage() {
       setPath(savedPath);
       setMessage(
         savedPath
-          ? `Configurazione salvata in ${savedPath}`
-          : "Configurazione salvata."
+          ? `Configuration saved to ${savedPath}`
+          : "Configuration saved."
       );
       setTimeout(() => setMessage(""), 5000);
     } catch (err) {
-      console.error("Errore salvataggio Matlab", err);
-      setError("Errore di rete durante il salvataggio della configurazione.");
+      console.error("Matlab save error", err);
+      setError("Network error while saving configuration.");
     } finally {
       setSaving(false);
     }
@@ -149,13 +147,13 @@ export default function MatlabConfigPage() {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {
-      console.error("Errore copia Matlab", err);
+      console.error("Matlab copy error", err);
     }
   };
 
   const handleReset = () => {
     setConfig(defaultMatlabYaml);
-    setMessage("Valori ripristinati.");
+    setMessage("Values restored.");
     setTimeout(() => setMessage(""), 3000);
   };
 
@@ -164,17 +162,17 @@ export default function MatlabConfigPage() {
       <div className="flex flex-col gap-1">
         <h1 className="text-2xl font-semibold">Matlab Agent</h1>
         <p className="text-sm text-zinc-500">
-          Modifica la configurazione dell'agent Matlab e salva il file
-          <code>config.yaml</code> pronto per l'esecuzione.
+          Edit the Matlab agent configuration and save the
+          <code>config.yaml</code> file ready for execution.
         </p>
       </div>
 
       <form onSubmit={handleSubmit} className="grid gap-6">
         <Card>
           <CardHeader>
-            <CardTitle>Configurazione YAML</CardTitle>
+            <CardTitle>YAML Configuration</CardTitle>
             <CardDescription>
-              Personalizza il comportamento dell'agent Matlab.
+              Customize the Matlab agent behavior.
             </CardDescription>
           </CardHeader>
           <CardContent className="grid gap-3">
@@ -187,13 +185,13 @@ export default function MatlabConfigPage() {
             />
             <div className="flex flex-wrap gap-3">
               <Button type="submit" disabled={saving}>
-                {saving ? "Salvataggio..." : "Salva configurazione"}
+                {saving ? "Saving..." : "Save configuration"}
               </Button>
               <Button type="button" variant="secondary" onClick={handleCopy}>
-                {copied ? "Copiato!" : "Copia YAML"}
+                {copied ? "Copied!" : "Copy YAML"}
               </Button>
               <Button type="button" variant="outline" onClick={handleReset}>
-                Ripristina template
+                Reset template
               </Button>
             </div>
             {message ? (
@@ -202,11 +200,11 @@ export default function MatlabConfigPage() {
             {error ? <p className="text-sm text-red-500">{error}</p> : null}
             {path ? (
               <p className="text-xs text-zinc-500">
-                Percorso attuale: <code>{path}</code>
+                Current path: <code>{path}</code>
               </p>
             ) : (
               <p className="text-xs text-amber-600">
-                Salva per generare il file di configurazione.
+                Save to generate the configuration file.
               </p>
             )}
           </CardContent>

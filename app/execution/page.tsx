@@ -116,8 +116,7 @@ export default function ExecutionPage() {
             setRuntimeState(id, (current) => ({
               ...current,
               statusMessage:
-                current.statusMessage ||
-                "Impossibile recuperare lo stato iniziale.",
+                current.statusMessage || "Unable to retrieve initial status.",
             }));
             return;
           }
@@ -140,10 +139,7 @@ export default function ExecutionPage() {
           }));
         });
       } catch (error) {
-        console.error(
-          "Errore durante il caricamento dello stato iniziale",
-          error
-        );
+        console.error("Error loading initial status", error);
       }
     };
 
@@ -212,7 +208,7 @@ export default function ExecutionPage() {
     setRuntimeState(id, (current) => ({
       ...current,
       installing: true,
-      statusMessage: "Installazione in corso...",
+      statusMessage: "Installation in progress...",
     }));
 
     try {
@@ -232,16 +228,16 @@ export default function ExecutionPage() {
         installLogs: logs || current.installLogs,
         statusMessage:
           response.ok && data.success
-            ? `${runtimeUiDefinitions[id].title} installato correttamente.`
+            ? `${runtimeUiDefinitions[id].title} installed successfully.`
             : data.error ??
-              "Installazione fallita. Controlla i log per maggiori dettagli.",
+              "Installation failed. Check the logs for more details.",
       }));
     } catch (error) {
-      console.error(`Errore installazione ${id}`, error);
+      console.error(`Error installing ${id}`, error);
       setRuntimeState(id, (current) => ({
         ...current,
         installing: false,
-        statusMessage: "Errore di rete durante l'installazione.",
+        statusMessage: "Network error during installation.",
       }));
     }
   };
@@ -249,7 +245,7 @@ export default function ExecutionPage() {
   const handleRun = async (id: RuntimeId) => {
     setRuntimeState(id, (current) => ({
       ...current,
-      statusMessage: "Avvio in corso...",
+      statusMessage: "Starting...",
     }));
 
     try {
@@ -265,14 +261,14 @@ export default function ExecutionPage() {
           ...current,
           statusMessage:
             data.error ??
-            "Avvio fallito. Verifica che la configurazione sia presente.",
+            "Start failed. Make sure the configuration file is present.",
         }));
       }
     } catch (error) {
-      console.error(`Errore avvio ${id}`, error);
+      console.error(`Error starting ${id}`, error);
       setRuntimeState(id, (current) => ({
         ...current,
-        statusMessage: "Errore di rete durante l'avvio del processo.",
+        statusMessage: "Network error while starting the process.",
       }));
     }
   };
@@ -280,7 +276,7 @@ export default function ExecutionPage() {
   const handleStop = async (id: RuntimeId) => {
     setRuntimeState(id, (current) => ({
       ...current,
-      statusMessage: "Interruzione richiesta...",
+      statusMessage: "Stop requested...",
     }));
 
     try {
@@ -294,14 +290,14 @@ export default function ExecutionPage() {
         const data = await response.json().catch(() => ({}));
         setRuntimeState(id, (current) => ({
           ...current,
-          statusMessage: data.error ?? "Impossibile interrompere il processo.",
+          statusMessage: data.error ?? "Unable to stop the process.",
         }));
       }
     } catch (error) {
-      console.error(`Errore arresto ${id}`, error);
+      console.error(`Error stopping ${id}`, error);
       setRuntimeState(id, (current) => ({
         ...current,
-        statusMessage: "Errore di rete durante l'interruzione.",
+        statusMessage: "Network error while stopping.",
       }));
     }
   };
@@ -319,7 +315,7 @@ export default function ExecutionPage() {
         <CardContent className="grid gap-4">
           <div className="flex flex-col gap-1 text-sm text-zinc-500">
             <span>
-              <strong>Comando esecuzione:</strong> {definition.runPreview}
+              <strong>Run command:</strong> {definition.runPreview}
             </span>
             <span>
               <strong>Config:</strong>{" "}
@@ -327,7 +323,8 @@ export default function ExecutionPage() {
                 <code>{runtimeState.configPath}</code>
               ) : (
                 <span className="text-amber-600">
-                  Salva prima il file di configurazione nella pagina dedicata.
+                  Please save the configuration file first in the dedicated
+                  page.
                 </span>
               )}
             </span>
@@ -340,13 +337,12 @@ export default function ExecutionPage() {
           ) : null}
 
           <div className="flex flex-wrap items-center gap-3 text-sm text-zinc-500">
-            <span>Installato: {runtimeState.isInstalled ? "Sì" : "No"}</span>
+            <span>Installed: {runtimeState.isInstalled ? "Yes" : "No"}</span>
             <span>
-              Stato esecuzione:{" "}
-              {runtimeState.running ? "In corso" : "In attesa"}
+              Execution status: {runtimeState.running ? "Running" : "Idle"}
             </span>
             {runtimeState.lastExitCode !== null ? (
-              <span>Ultimo exit code: {runtimeState.lastExitCode}</span>
+              <span>Last exit code: {runtimeState.lastExitCode}</span>
             ) : null}
           </div>
 
@@ -357,14 +353,14 @@ export default function ExecutionPage() {
               onClick={() => handleInitialization(id)}
               disabled={runtimeState.installing}
             >
-              {runtimeState.installing ? "Inizializzazione..." : "Inizializza"}
+              {runtimeState.installing ? "Initializing..." : "Initialize"}
             </Button>
             <Button
               type="button"
               onClick={() => handleRun(id)}
               disabled={!runtimeState.isInstalled || runtimeState.running}
             >
-              Avvia
+              Start
             </Button>
             <Button
               type="button"
@@ -378,13 +374,13 @@ export default function ExecutionPage() {
 
           <div className="grid gap-2">
             <LabelledTextarea
-              label="Log di installazione"
+              label="Installation log"
               value={runtimeState.installLogs}
             />
             <LabelledTextarea
-              label="Log di esecuzione"
+              label="Execution log"
               value={runtimeState.runLogs}
-              placeholder="Log di esecuzione"
+              placeholder="Execution log"
             />
           </div>
         </CardContent>
@@ -397,17 +393,17 @@ export default function ExecutionPage() {
       <div className="flex flex-col gap-1">
         <h1 className="text-2xl font-semibold">Simulation runtime</h1>
         <p className="text-sm text-zinc-500">
-          Controlla l'esecuzione del Simulation Bridge e degli agent collegati.
+          Control the execution of the Simulation Bridge and connected agents.
         </p>
       </div>
 
       <div className="grid gap-6 grid-cols-1 lg:grid-cols-2">
-        {/* Colonna sinistra (50%) */}
+        {/* Left column (50%) */}
         <div className="grid gap-4">
           {renderRuntimeCard("simulation-bridge")}
         </div>
 
-        {/* Colonna destra (50%) */}
+        {/* Right column (50%) */}
         <div className="grid gap-4">
           {renderRuntimeCard("anylogic-agent")}
           {renderRuntimeCard("matlab-agent")}
@@ -415,9 +411,9 @@ export default function ExecutionPage() {
       </div>
 
       <div className="mt-4 text-xs text-zinc-500">
-        Hai bisogno di modificare le configurazioni? Vai a{" "}
+        Need to edit configurations? Go to{" "}
         <Link className="underline" href="/config/simulation-bridge">
-          Configurazione
+          Configuration
         </Link>
         .
       </div>

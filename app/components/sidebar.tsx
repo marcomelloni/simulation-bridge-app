@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils";
 
 const navigation = [
   {
-    section: "Configurazione",
+    section: "Configuration",
     items: [
       {
         label: "Simulation Bridge",
@@ -21,18 +21,18 @@ const navigation = [
         icon: Settings2,
       },
       {
-        label: "Matlab",
+        label: "MATLAB",
         href: "/config/matlab",
         icon: Cpu,
       },
     ],
   },
   {
-    section: "Esecuzione",
+    section: "Execution",
     items: [
       {
         label: "Simulation runtime",
-        href: "/bridge",
+        href: "/execution",
         icon: PlayCircle,
       },
     ],
@@ -72,7 +72,7 @@ export function Sidebar() {
                       "flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors",
                       active
                         ? "bg-zinc-900/10 text-zinc-900"
-                        : "text-zinc-500 hover:bg-zinc-100 text-zinc-600 hover:text-zinc-900"
+                        : "text-zinc-600 hover:bg-zinc-100 hover:text-zinc-900"
                     )}
                   >
                     <Icon className="h-4 w-4" />

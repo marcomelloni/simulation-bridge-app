@@ -2,6 +2,8 @@
 
 A web interface for configuring and controlling [Simulation Bridge](https://github.com/INTO-CPS-Association/simulation-bridge) and its associated agents.
 
+![Web App](./docs/screen.png)
+
 ## Prerequisites
 
 - **Node.js 18+** (or 20+) and npm
