@@ -1,0 +1,61 @@
+# Node.js
+node_modules/
+.pnpm/
+.pnp.*
+npm-debug.log
+yarn-debug.log
+yarn-error.log
+package-lock.json
+pnpm-lock.yaml
+yarn.lock
+
+# Next.js
+.next/
+out/
+*.next/
+build/
+
+# TypeScript
+*.tsbuildinfo
+
+# Logs
+*.log
+
+# macOS
+.DS_Store
+
+# Windows
+Thumbs.db
+ehthumbs.db
+
+# IDEs
+.vscode/
+.idea/
+
+# Editor config files
+*.sublime-workspace
+*.sublime-project
+.vscode/
+
+# Shadcn UI specific
+shadcn.json
+
+# Local environment files
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Docker
+docker-compose.override.yml
+Dockerfile.local
+
+# Test artifacts
+coverage/
+*.seed
+*.test.tsx
+
+# Simulation Bridge specific
+logs/
+certs/
+config.yaml
