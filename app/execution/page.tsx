@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 
 import type { RuntimeId } from "@/lib/runtimes";
@@ -15,6 +15,8 @@ import {
   CardTitle,
 } from "@/app/components/ui/card";
 import { Textarea } from "@/app/components/ui/textarea";
+
+import { cn } from "@/lib/utils";
 
 interface RuntimeLogEntry {
   id: number;
@@ -79,6 +81,11 @@ export default function ExecutionPage() {
   );
 
   const [state, setState] = useState(initialState);
+
+  const agentRuntimeIds = useMemo(
+    () => runtimeOrder.filter((id) => id !== "simulation-bridge"),
+    []
+  );
 
   const setRuntimeState = (
     id: RuntimeId,
@@ -307,12 +314,17 @@ export default function ExecutionPage() {
     const runtimeState = state[id];
 
     return (
-      <Card key={id}>
-        <CardHeader>
-          <CardTitle>{definition.title}</CardTitle>
-          <CardDescription>{definition.description}</CardDescription>
+      <Card key={id} className="flex h-full flex-col">
+        <CardHeader className="flex flex-col gap-2">
+          <div className="flex items-start justify-between gap-3">
+            <div className="space-y-1">
+              <CardTitle>{definition.title}</CardTitle>
+              <CardDescription>{definition.description}</CardDescription>
+            </div>
+            <RuntimeStatusPill runtimeState={runtimeState} />
+          </div>
         </CardHeader>
-        <CardContent className="grid gap-4">
+        <CardContent className="flex flex-1 flex-col gap-4">
           <div className="flex flex-col gap-1 text-sm text-zinc-500">
             <span>
               <strong>Run command:</strong> {definition.runPreview}
@@ -389,7 +401,7 @@ export default function ExecutionPage() {
   };
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex h-[calc(100vh-8rem)] min-h-[600px] flex-col gap-6">
       <div className="flex flex-col gap-1">
         <h1 className="text-2xl font-semibold">Simulation runtime</h1>
         <p className="text-sm text-zinc-500">
@@ -397,16 +409,15 @@ export default function ExecutionPage() {
         </p>
       </div>
 
-      <div className="grid gap-6 grid-cols-1 lg:grid-cols-2">
-        {/* Left column (50%) */}
-        <div className="grid gap-4">
+      <div className="grid h-full gap-6 lg:grid-cols-[1.15fr_minmax(0,1fr)]">
+        {/* Left column */}
+        <div className="flex h-full flex-col gap-4">
           {renderRuntimeCard("simulation-bridge")}
         </div>
 
-        {/* Right column (50%) */}
-        <div className="grid gap-4">
-          {renderRuntimeCard("anylogic-agent")}
-          {renderRuntimeCard("matlab-agent")}
+        {/* Right column */}
+        <div className="grid h-full auto-rows-fr gap-4">
+          {agentRuntimeIds.map((runtimeId) => renderRuntimeCard(runtimeId))}
         </div>
       </div>
 
@@ -441,4 +452,75 @@ function LabelledTextarea({
       />
     </div>
   );
+}
+
+function RuntimeStatusPill({
+  runtimeState,
+}: {
+  runtimeState: RuntimeUIState;
+}) {
+  const status = getRuntimeStatus(runtimeState);
+
+  return (
+    <div
+      className={cn(
+        "flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-medium",
+        status.pillClass
+      )}
+    >
+      <span
+        aria-hidden
+        className={cn("h-2 w-2 rounded-full", status.indicatorClass)}
+      />
+      <span>{status.label}</span>
+    </div>
+  );
+}
+
+function getRuntimeStatus(runtimeState: RuntimeUIState) {
+  if (runtimeState.installing) {
+    return {
+      label: "Installing",
+      pillClass: "border-amber-200 bg-amber-50 text-amber-600",
+      indicatorClass: "bg-amber-500",
+    };
+  }
+
+  if (runtimeState.running) {
+    return {
+      label: "Running",
+      pillClass: "border-emerald-200 bg-emerald-50 text-emerald-600",
+      indicatorClass: "bg-emerald-500",
+    };
+  }
+
+  if (runtimeState.lastExitCode !== null && runtimeState.lastExitCode !== 0) {
+    return {
+      label: "Error",
+      pillClass: "border-rose-200 bg-rose-50 text-rose-600",
+      indicatorClass: "bg-rose-500",
+    };
+  }
+
+  if (!runtimeState.isInstalled) {
+    return {
+      label: "Not installed",
+      pillClass: "border-zinc-200 bg-zinc-50 text-zinc-600",
+      indicatorClass: "bg-zinc-400",
+    };
+  }
+
+  if (runtimeState.lastExitCode === 0) {
+    return {
+      label: "Completed",
+      pillClass: "border-sky-200 bg-sky-50 text-sky-600",
+      indicatorClass: "bg-sky-500",
+    };
+  }
+
+  return {
+    label: "Idle",
+    pillClass: "border-slate-200 bg-slate-50 text-slate-600",
+    indicatorClass: "bg-slate-400",
+  };
 }
