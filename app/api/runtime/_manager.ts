@@ -60,7 +60,7 @@ class RuntimeManager {
         running: false,
         installed: false,
         statusMessage: "",
-        lastExitCode: null
+        lastExitCode: null,
       };
       this.states.set(id, state);
     }
@@ -74,7 +74,7 @@ class RuntimeManager {
       running: state.running,
       installed: state.installed,
       statusMessage: state.statusMessage,
-      lastExitCode: state.lastExitCode
+      lastExitCode: state.lastExitCode,
     };
   }
 
@@ -83,7 +83,10 @@ class RuntimeManager {
     if (state.installed !== installed) {
       state.installed = installed;
       this.emitEvent(id, { type: "snapshot", payload: this.getSnapshot(id) });
-      this.emitStatus(id, installed ? "Pacchetto installato." : "Pacchetto non installato.");
+      this.emitStatus(
+        id,
+        installed ? "Package installed." : "Package not installed."
+      );
     }
   }
 
@@ -96,13 +99,16 @@ class RuntimeManager {
     };
   }
 
-  private appendLog(id: RuntimeId, entry: Omit<RuntimeLogEntry, "id" | "timestamp"> & { timestamp?: number }) {
+  private appendLog(
+    id: RuntimeId,
+    entry: Omit<RuntimeLogEntry, "id" | "timestamp"> & { timestamp?: number }
+  ) {
     const state = this.ensureState(id);
     const logEntry: RuntimeLogEntry = {
       id: ++this.logCounter,
       source: entry.source,
       chunk: entry.chunk,
-      timestamp: entry.timestamp ?? Date.now()
+      timestamp: entry.timestamp ?? Date.now(),
     };
     state.logs.push(logEntry);
     if (state.logs.length > LOG_LIMIT) {
@@ -131,7 +137,7 @@ class RuntimeManager {
   startRuntime(id: RuntimeId, runtime: RuntimeDefinition, cwd: string) {
     const state = this.ensureState(id);
     if (state.process) {
-      return { ok: false, error: "Processo già in esecuzione." };
+      return { ok: false, error: "Process already running." };
     }
 
     const { command, args } = runtime.spawnCommand(runtime.configPath);
@@ -140,7 +146,7 @@ class RuntimeManager {
       const child = spawn(command, args, {
         cwd,
         env: process.env,
-        shell: true
+        shell: true,
       });
 
       state.process = child;
@@ -150,10 +156,13 @@ class RuntimeManager {
 
       this.appendLog(id, {
         source: "system",
-        chunk: `Esecuzione avviata: ${command} ${args.join(" ")}`
+        chunk: `Execution started: ${command} ${args.join(" ")}`,
       });
-      this.emitStatus(id, "Processo avviato");
-      this.emitEvent(id, { type: "start", payload: { pid: child.pid ?? null } });
+      this.emitStatus(id, "Process started");
+      this.emitEvent(id, {
+        type: "start",
+        payload: { pid: child.pid ?? null },
+      });
 
       child.stdout.on("data", (chunk: Buffer) => {
         this.appendLog(id, { source: "stdout", chunk: chunk.toString() });
@@ -164,8 +173,11 @@ class RuntimeManager {
       });
 
       child.on("error", (error: Error) => {
-        this.appendLog(id, { source: "system", chunk: `Errore processo: ${error.message}` });
-        this.emitStatus(id, "Errore durante l'esecuzione del processo.");
+        this.appendLog(id, {
+          source: "system",
+          chunk: `Process error: ${error.message}`,
+        });
+        this.emitStatus(id, "Error during process execution.");
       });
 
       child.on("close", (exitCode: number | null) => {
@@ -174,9 +186,14 @@ class RuntimeManager {
         state.lastExitCode = exitCode;
         this.appendLog(id, {
           source: "system",
-          chunk: `Processo terminato con codice ${exitCode ?? "null"}`
+          chunk: `Process terminated with code ${exitCode ?? "null"}`,
         });
-        this.emitStatus(id, exitCode === 0 ? "Esecuzione completata." : "Processo terminato con errori.");
+        this.emitStatus(
+          id,
+          exitCode === 0
+            ? "Execution completed."
+            : "Process terminated with errors."
+        );
         this.emitEvent(id, { type: "exit", payload: { exitCode } });
         this.emitEvent(id, { type: "snapshot", payload: this.getSnapshot(id) });
       });
@@ -185,12 +202,12 @@ class RuntimeManager {
     } catch (error) {
       this.appendLog(id, {
         source: "system",
-        chunk: `Impossibile avviare il processo: ${(error as Error).message}`
+        chunk: `Unable to start process: ${(error as Error).message}`,
       });
-      this.emitStatus(id, "Avvio fallito");
+      this.emitStatus(id, "Startup failed");
       state.process = null;
       state.running = false;
-      return { ok: false, error: "Impossibile avviare il processo." };
+      return { ok: false, error: "Unable to start process." };
     }
   }
 
@@ -198,21 +215,30 @@ class RuntimeManager {
     const state = this.ensureState(id);
     const child = state.process;
     if (!child || !state.running) {
-      return { ok: false, error: "Nessun processo in esecuzione." };
+      return { ok: false, error: "No process running." };
     }
 
-    this.appendLog(id, { source: "system", chunk: "Richiesta interruzione (SIGINT)..." });
-    this.emitStatus(id, "Interruzione in corso...");
+    this.appendLog(id, {
+      source: "system",
+      chunk: "Requesting interruption (SIGINT)...",
+    });
+    this.emitStatus(id, "Stopping in progress...");
 
     const killed = child.kill("SIGINT");
     if (!killed) {
-      this.appendLog(id, { source: "system", chunk: "Impossibile inviare SIGINT. Tentativo di SIGTERM." });
+      this.appendLog(id, {
+        source: "system",
+        chunk: "Unable to send SIGINT. Attempting SIGTERM.",
+      });
       child.kill("SIGTERM");
     }
 
     setTimeout(() => {
       if (state.process === child && state.running) {
-        this.appendLog(id, { source: "system", chunk: "Forzo l'arresto con SIGKILL." });
+        this.appendLog(id, {
+          source: "system",
+          chunk: "Force stopping with SIGKILL.",
+        });
         child.kill("SIGKILL");
       }
     }, 5000).unref?.();
@@ -221,7 +247,9 @@ class RuntimeManager {
   }
 }
 
-const globalRef = globalThis as unknown as { __runtimeManager?: RuntimeManager };
+const globalRef = globalThis as unknown as {
+  __runtimeManager?: RuntimeManager;
+};
 if (!globalRef.__runtimeManager) {
   globalRef.__runtimeManager = new RuntimeManager();
 }
