@@ -59,3 +59,4 @@ coverage/
 logs/
 certs/
 config.yaml
+client/venv/

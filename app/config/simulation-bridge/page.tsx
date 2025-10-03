@@ -24,52 +24,52 @@ rabbitmq:
   username: guest
   password: guest
   tls: false
-  infrastructure: |
-    infrastructure:
-      exchanges:
-        - name: ex.input.bridge
-          type: topic
-          durable: true
-          auto_delete: false
-          internal: false
 
-        - name: ex.bridge.output
-          type: topic
-          durable: true
-          auto_delete: false
-          internal: false
+  infrastructure:
+    exchanges:
+      - name: ex.input.bridge
+        type: topic
+        durable: true
+        auto_delete: false
+        internal: false
 
-        - name: ex.sim.result
-          type: topic
-          durable: true
-          auto_delete: false
-          internal: false
+      - name: ex.bridge.output
+        type: topic
+        durable: true
+        auto_delete: false
+        internal: false
 
-        - name: ex.bridge.result
-          type: topic
-          durable: true
-          auto_delete: false
-          internal: false
+      - name: ex.sim.result
+        type: topic
+        durable: true
+        auto_delete: false
+        internal: false
 
-      queues:
-        - name: Q.bridge.input
-          durable: true
-          exclusive: false
-          auto_delete: false
+      - name: ex.bridge.result
+        type: topic
+        durable: true
+        auto_delete: false
+        internal: false
 
-        - name: Q.bridge.result
-          durable: true
-          exclusive: false
-          auto_delete: false
+    queues:
+      - name: Q.bridge.input
+        durable: true
+        exclusive: false
+        auto_delete: false
 
-      bindings:
-        - queue: Q.bridge.input
-          exchange: ex.input.bridge
-          routing_key: "#"
+      - name: Q.bridge.result
+        durable: true
+        exclusive: false
+        auto_delete: false
 
-        - queue: Q.bridge.result
-          exchange: ex.sim.result
-          routing_key: "#"
+    bindings:
+      - queue: Q.bridge.input
+        exchange: ex.input.bridge
+        routing_key: "#"
+
+      - queue: Q.bridge.result
+        exchange: ex.sim.result
+        routing_key: "#"
 
 mqtt:
   host: localhost
