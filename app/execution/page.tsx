@@ -79,6 +79,7 @@ export default function ExecutionPage() {
   );
 
   const [state, setState] = useState(initialState);
+  const [startingAll, setStartingAll] = useState(false);
 
   const setRuntimeState = (
     id: RuntimeId,
@@ -273,6 +274,31 @@ export default function ExecutionPage() {
     }
   };
 
+  const handleStartAll = async () => {
+    setStartingAll(true);
+    try {
+      for (const id of runtimeOrder) {
+        const runtimeState = state[id];
+
+        if (!runtimeState.isInstalled) {
+          setRuntimeState(id, (current) => ({
+            ...current,
+            statusMessage: "Please install this runtime before starting it.",
+          }));
+          continue;
+        }
+
+        if (runtimeState.running) {
+          continue;
+        }
+
+        await handleRun(id);
+      }
+    } finally {
+      setStartingAll(false);
+    }
+  };
+
   const handleStop = async (id: RuntimeId) => {
     setRuntimeState(id, (current) => ({
       ...current,
@@ -390,11 +416,28 @@ export default function ExecutionPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex flex-col gap-1">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <h1 className="text-2xl font-semibold">Simulation runtime</h1>
-        <p className="text-sm text-zinc-500">
-          Control the execution of the Simulation Bridge and connected agents.
-        </p>
+        <Button
+          type="button"
+          onClick={handleStartAll}
+          disabled={
+            startingAll ||
+            runtimeOrder.some((id) => !state[id].isInstalled) ||
+            runtimeOrder.every((id) => state[id].running)
+          }
+        >
+          {startingAll ? "Starting all..." : "Start all runtimes"}
+        </Button>
+      </div>
+      <p className="text-sm text-zinc-500">
+        Control the execution of the Simulation Bridge and connected agents.
+      </p>
+
+      <div className="flex flex-wrap items-center gap-2 text-xs text-zinc-500">
+        {!runtimeOrder.every((id) => state[id].isInstalled) ? (
+          <span>Install all runtimes before starting them together.</span>
+        ) : null}
       </div>
 
       <div className="grid gap-6 grid-cols-1 lg:grid-cols-2">
