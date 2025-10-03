@@ -17,6 +17,22 @@ const CONFIG_TARGETS = {
     configDir: path.join(appRoot, "simulation-bridge", "matlab-agent"),
     fileName: "config.yaml",
   },
+  "client-rabbitmq": {
+    configDir: path.join(appRoot, "client", "rabbitmq"),
+    fileName: "rabbitmq_use.yaml",
+  },
+  "client-mqtt": {
+    configDir: path.join(appRoot, "client", "mqtt"),
+    fileName: "mqtt_use.yaml",
+  },
+  "client-rest": {
+    configDir: path.join(appRoot, "client", "rest"),
+    fileName: "rest_use.yaml",
+  },
+  "client-simulation": {
+    configDir: path.join(appRoot, "client"),
+    fileName: "simulation.yaml",
+  },
 } as const;
 
 type TargetKey = keyof typeof CONFIG_TARGETS;

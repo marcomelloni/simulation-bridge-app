@@ -61,6 +61,12 @@ const joinOutputs = (stdout?: string, stderr?: string) =>
     .join("\n\n");
 
 export default function ExecutionPage() {
+  const clientRuntimeIds: RuntimeId[] = [
+    "client-rabbitmq",
+    "client-mqtt",
+    "client-rest",
+  ];
+
   const initialState = runtimeOrder.reduce<Record<RuntimeId, RuntimeUIState>>(
     (acc, id) => {
       acc[id] = {
@@ -397,16 +403,21 @@ export default function ExecutionPage() {
         </p>
       </div>
 
-      <div className="grid gap-6 grid-cols-1 lg:grid-cols-2">
-        {/* Left column (50%) */}
+      <div className="grid gap-6 grid-cols-1 xl:grid-cols-3">
+        {/* Simulation Bridge */}
         <div className="grid gap-4">
           {renderRuntimeCard("simulation-bridge")}
         </div>
 
-        {/* Right column (50%) */}
+        {/* Agents */}
         <div className="grid gap-4">
           {renderRuntimeCard("anylogic-agent")}
           {renderRuntimeCard("matlab-agent")}
+        </div>
+
+        {/* Clients */}
+        <div className="grid gap-4">
+          {clientRuntimeIds.map((id) => renderRuntimeCard(id))}
         </div>
       </div>
 
@@ -414,8 +425,12 @@ export default function ExecutionPage() {
         Need to edit configurations? Go to{" "}
         <Link className="underline" href="/config/simulation-bridge">
           Configuration
-        </Link>
-        .
+        </Link>{" "}
+        or update the client files from the{" "}
+        <Link className="underline" href="/config/client">
+          Client configuration
+        </Link>{" "}
+        area.
       </div>
     </div>
   );

@@ -4,8 +4,10 @@ import type { ChildProcessWithoutNullStreams } from "child_process";
 import type { RuntimeId } from "@/lib/runtimes";
 
 export interface RuntimeDefinition {
-  packageName: string;
-  wheelPath: string;
+  packageName?: string;
+  wheelPath?: string;
+  requirementsPath?: string;
+  workingDirectory?: string;
   configPath: string;
   spawnCommand: (configPath: string) => { command: string; args: string[] };
 }
@@ -135,10 +137,11 @@ class RuntimeManager {
     }
 
     const { command, args } = runtime.spawnCommand(runtime.configPath);
+    const workingDirectory = runtime.workingDirectory ?? cwd;
 
     try {
       const child = spawn(command, args, {
-        cwd,
+        cwd: workingDirectory,
         env: process.env,
         shell: true
       });

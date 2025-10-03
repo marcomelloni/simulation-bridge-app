@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Cog, Cpu, PlayCircle, Settings2 } from "lucide-react";
+import { Cog, Cpu, PlayCircle, Settings2, Share2 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
@@ -14,6 +14,11 @@ const navigation = [
         label: "Simulation Bridge",
         href: "/config/simulation-bridge",
         icon: Cog,
+      },
+      {
+        label: "Client",
+        href: "/config/client",
+        icon: Share2,
       },
       {
         label: "AnyLogic",
