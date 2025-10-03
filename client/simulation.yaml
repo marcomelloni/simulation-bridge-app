@@ -1,42 +1,45 @@
 simulation:
-  request_id: req-abc123
-  client_id: my-client
+  request_id: abcdef12345
+  # (RequestID) to identify each request.
+
+  timestamp: "2024-01-01T00:00:00Z"
+  # Timestamp for the simulation request in ISO 8601 format
+
+  timeout: 30
+  # Timeout for the simulation in seconds
+
+  client_id: dt
+  # Unique identifier of the sender of this simulation request
+
   simulator: matlab
-  type: interactive
-  file: traj_planning.m
+  # Specifies the target system for the simulation.
+  # Use 'matlab' to route the request to the MATLAB simulator.
+
+  type: streaming
+  # Specifies the simulation execution mode.
+  # Options:
+  #   - 'batch': runs the simulation in batch mode, where results are returned only after the entire computation is complete.
+  #   - 'streaming': runs the simulation in streaming mode, providing real-time updates at each computation step.
+  #   - 'interactive': same as 'streaming', where you need to provide a continuous stream of inputs and outputs.
+
+  file: SimulationStreaming.m
+  # The name of the MATLAB script or function file to execute for this simulation.
+
   inputs:
-    stream_source: "rabbitmq://streaming.inputs.pickplace"
-    # opzionali (default nel codice se omessi)
-    robotModel: "universalUR10" # kinovaGen3 | frankaEmikaPanda | universalUR5 | universalUR10 | universalUR3
-    vLin: 1.2 # m/s
-    wAng: 6.0 # rad/s
-    zApproach: 0.25
-    zLift: 0.35
-    rateHz: 120
-    minDur: 0.02
-    PAUSE_IO: 0.01
-    MAX_STEPS: 100000
+    # Input variables to be passed to the simulation.
+    # If the simulation type is 'streaming' or 'interactive', it is mandatory to specify 'stream_source' to indicate the source of the input stream.
+    # stream_source: The source of the input stream, e.g., RabbitMQ, which streams real-time input data to the simulation.
+    # This is required for interactive or streaming simulations.
+    stream_source: # Source of the input stream, typically RabbitMQ for streaming mode.
+
+    i1: ..
+    i2: ..
+    i3: ..
+
   outputs:
-    status: string # planned | running | done | invalid
-    n_steps: int # quando planned/running
-    step: int # quando running
-    ee:
-      x: float
-      y: float
-      z: float
-    params:
-      vLin: float
-      wAng: float
-      zApproach: float
-      zLift: float
-      rateHz: float
-      minDur: float
-    pick:
-      - float
-      - float
-      - float
-    place:
-      - float
-      - float
-      - float
-    reason: string # per status=invalid
+    # Expected output variables from the simulation.
+    # Customize these keys based on what outputs your simulation provides.
+    o1: ..
+    o2: ..
+    o3: ..
+    o4: ..

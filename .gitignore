@@ -60,3 +60,4 @@ logs/
 certs/
 config.yaml
 client/venv/
+client/dt_rabbitmq/

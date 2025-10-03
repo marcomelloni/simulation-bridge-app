@@ -4,7 +4,7 @@ rabbitmq:
   vhost: /
   username: guest
   password: guest
-  tls: false 
+  tls: false
 
 exchanges:
   input_bridge:
