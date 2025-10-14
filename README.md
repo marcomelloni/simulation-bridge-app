@@ -4,6 +4,8 @@ A web interface for configuring and controlling [Simulation Bridge](https://gith
 
 ![Web App](./docs/screen.png)
 
+https://github.com/user-attachments/assets/9f3e1cf7-070b-4695-be3a-cccb917bf3f0
+
 ## Prerequisites
 
 - **Node.js 18+** and npm
