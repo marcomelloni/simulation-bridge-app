@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Cog, Cpu, PlayCircle, Settings2 } from "lucide-react";
+import { Bot, Cog, Cpu, PlayCircle, Settings2 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
@@ -25,6 +25,11 @@ const navigation = [
         href: "/config/matlab",
         icon: Cpu,
       },
+      {
+        label: "MockPT",
+        href: "/config/mockpt",
+        icon: Bot,
+      },
     ],
   },
   {
@@ -34,6 +39,11 @@ const navigation = [
         label: "Simulation runtime",
         href: "/execution",
         icon: PlayCircle,
+      },
+      {
+        label: "MockPT",
+        href: "/execution/mockpt",
+        icon: Bot,
       },
     ],
   },

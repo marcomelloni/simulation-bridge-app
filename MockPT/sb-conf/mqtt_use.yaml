@@ -8,5 +8,3 @@ mqtt:
   username: "guest"
   password: "guest"
   tls: false
-
-payload_file: "../simulation.yaml"

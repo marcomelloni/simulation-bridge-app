@@ -17,6 +17,14 @@ const CONFIG_TARGETS = {
     configDir: path.join(appRoot, "simulation-bridge", "matlab-agent"),
     fileName: "config.yaml",
   },
+  "mockpt-http": {
+    configDir: path.join(appRoot, "MockPT", "conf"),
+    fileName: "http_simulation_config.yaml",
+  },
+  "mockpt-mqtt": {
+    configDir: path.join(appRoot, "MockPT", "conf"),
+    fileName: "mqtt_simulation_config.yaml",
+  },
 } as const;
 
 type TargetKey = keyof typeof CONFIG_TARGETS;
@@ -36,7 +44,7 @@ export async function GET(_request: NextRequest, { params }: RouteContext) {
   const info = getTargetInfo(target);
   if (!info) {
     return NextResponse.json(
-      { error: `Target non supportato: ${target}` },
+      { error: `Unsupported target: ${target}` },
       { status: 404 }
     );
   }
@@ -56,7 +64,7 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
   const info = getTargetInfo(target);
   if (!info) {
     return NextResponse.json(
-      { error: `Target non supportato: ${target}` },
+      { error: `Unsupported target: ${target}` },
       { status: 404 }
     );
   }
@@ -67,7 +75,7 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
 
     if (!yaml) {
       return NextResponse.json(
-        { error: "Payload mancante o non valido" },
+        { error: "Missing or invalid payload." },
         { status: 400 }
       );
     }
@@ -78,9 +86,9 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
 
     return NextResponse.json({ ok: true, path: configPath });
   } catch (error) {
-    console.error("Errore salvataggio config", error);
+    console.error("Error saving configuration", error);
     return NextResponse.json(
-      { error: "Impossibile salvare la configurazione" },
+      { error: "Unable to save configuration." },
       { status: 500 }
     );
   }

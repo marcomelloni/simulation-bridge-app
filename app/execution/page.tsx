@@ -32,6 +32,7 @@ interface RuntimeSnapshot {
   installed: boolean;
   statusMessage: string;
   lastExitCode: number | null;
+  configPath: string;
 }
 
 interface RuntimeUIState {
@@ -196,6 +197,10 @@ export default function ExecutionPage() {
           isInstalled: payload.installed,
           statusMessage: payload.statusMessage,
           lastExitCode: payload.lastExitCode,
+          configPath:
+            payload.configPath && payload.configPath.length > 0
+              ? payload.configPath
+              : current.configPath,
         }));
       });
 
@@ -292,13 +297,22 @@ export default function ExecutionPage() {
         body: JSON.stringify({ action: "run" }),
       });
 
+      const data = await response.json().catch(() => ({}));
+
       if (!response.ok) {
-        const data = await response.json().catch(() => ({}));
         setRuntimeState(id, (current) => ({
           ...current,
           statusMessage:
             data.error ??
             "Start failed. Make sure the configuration file is present.",
+        }));
+        return;
+      }
+
+      if (typeof data.configPath === "string" && data.configPath.length > 0) {
+        setRuntimeState(id, (current) => ({
+          ...current,
+          configPath: data.configPath,
         }));
       }
     } catch (error) {
@@ -347,7 +361,7 @@ export default function ExecutionPage() {
   };
 
   return (
-    <div className="flex h-[90vh] flex-col overflow-hidden bg-zinc-50">
+    <div className="flex h-[90vh] flex-col overflow-hidden bg-white">
       <main className="flex flex-1 min-h-0 overflow-hidden px-6 py-6">
         <div className="grid flex-1 min-h-0 h-full grid-rows-[repeat(2,minmax(0,1fr))] overflow-hidden lg:grid-cols-2 lg:grid-rows-1 lg:gap-6">
           <section className="flex h-full min-h-0 flex-col overflow-y-auto pr-0 lg:pr-3">
@@ -473,7 +487,7 @@ function RuntimeCard({
         </div>
 
         {runtimeState.statusMessage ? (
-          <div className="rounded-lg border border-zinc-200 bg-zinc-50 px-3 py-2 text-sm text-zinc-700">
+          <div className="rounded-lg border border-zinc-200 bg-white px-3 py-2 text-sm text-zinc-700 shadow-sm">
             {runtimeState.statusMessage}
           </div>
         ) : null}
@@ -548,7 +562,7 @@ function LabelledTextarea({
   placeholder?: string;
   className?: string;
   textareaClassName?: string;
-  textareaRef?: RefObject<HTMLTextAreaElement>;
+  textareaRef?: RefObject<HTMLTextAreaElement | null>;
 }) {
   return (
     <div className={cn("flex flex-col gap-2", className)}>

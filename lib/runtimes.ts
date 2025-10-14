@@ -1,10 +1,16 @@
-export type RuntimeId = "simulation-bridge" | "anylogic-agent" | "matlab-agent";
+export type RuntimeId =
+  | "simulation-bridge"
+  | "anylogic-agent"
+  | "matlab-agent"
+  | "mockpt";
 
 export const runtimeOrder: RuntimeId[] = [
   "simulation-bridge",
   "anylogic-agent",
   "matlab-agent",
 ];
+
+export const allRuntimeIds: RuntimeId[] = [...runtimeOrder, "mockpt"];
 
 export interface RuntimeUiDefinition {
   title: string;
@@ -34,5 +40,14 @@ export const runtimeUiDefinitions: Record<RuntimeId, RuntimeUiDefinition> = {
       "Execute Matlab scenarios and communicate with the bridge following the settings defined in the configuration file.",
     installHint: "pip install dist/matlab_agent-1.0.0-py3-none-any.whl",
     runPreview: "matlab-agent --config-file <config.yaml>",
+  },
+  mockpt: {
+    title: "Mock Physical Twin",
+    description:
+      "Run the Mock Physical Twin emulator using the selected configuration and Simulation Bridge integration.",
+    installHint:
+      "Initialize to create MockPT/.venv and install dependencies from requirements.txt.",
+    runPreview:
+      "python physical_twin_emulator.py -c ../conf/http_simulation_config.yaml",
   },
 };

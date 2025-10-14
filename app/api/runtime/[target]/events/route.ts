@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import type { RuntimeId } from "@/lib/runtimes";
-import { runtimeOrder } from "@/lib/runtimes";
+import { allRuntimeIds } from "@/lib/runtimes";
 
 import { runtimeManager } from "../../_manager";
 
@@ -12,7 +12,7 @@ type RouteContext = {
 };
 
 const isRuntimeId = (value: string): value is RuntimeId => {
-  return runtimeOrder.includes(value as RuntimeId);
+  return allRuntimeIds.includes(value as RuntimeId);
 };
 
 export async function GET(request: NextRequest, { params }: RouteContext) {

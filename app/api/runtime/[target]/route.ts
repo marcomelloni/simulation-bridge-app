@@ -21,6 +21,25 @@ type RouteContext = {
 
 const appRoot = process.cwd();
 const projectRoot = appRoot;
+const mockPtBaseDir = path.join(projectRoot, "MockPT");
+const mockPtConfDir = path.join(mockPtBaseDir, "conf");
+const mockPtDefaultConfig = path.join(
+  mockPtConfDir,
+  "http_simulation_config.yaml"
+);
+const mockPtScriptPath = path.join(
+  mockPtBaseDir,
+  "app",
+  "physical_twin_emulator.py"
+);
+const mockPtVenvDir = path.join(mockPtBaseDir, ".venv");
+const mockPtRequirementsPath = path.join(mockPtBaseDir, "requirements.txt");
+const getMockPtPythonPath = () => {
+  if (process.platform === "win32") {
+    return path.join(mockPtVenvDir, "Scripts", "python.exe");
+  }
+  return path.join(mockPtVenvDir, "bin", "python");
+};
 
 const RUNTIMES: Record<RuntimeId, RuntimeDefinition> = {
   "simulation-bridge": {
@@ -50,10 +69,27 @@ const RUNTIMES: Record<RuntimeId, RuntimeDefinition> = {
       args: ["--config-file", configPath],
     }),
   },
+  mockpt: {
+    configPath: mockPtDefaultConfig,
+    spawnCommand: (configPath) => ({
+      command: getMockPtPythonPath(),
+      args: [mockPtScriptPath, "-c", configPath],
+      cwd: path.join(mockPtBaseDir, "app"),
+    }),
+  },
 };
 
 const getRuntime = (target: string) => {
   return RUNTIMES[target as RuntimeId] ?? null;
+};
+
+const fileExists = async (filePath: string) => {
+  try {
+    await fs.access(filePath);
+    return true;
+  } catch (_error) {
+    return false;
+  }
 };
 
 function runCommand(command: string, args: string[] = [], cwd = projectRoot): Promise<CommandResult> {
@@ -89,27 +125,39 @@ export async function GET(_request: NextRequest, { params }: RouteContext) {
   const { target } = await params;
   const runtime = getRuntime(target);
   if (!runtime) {
-    return NextResponse.json({ error: `Target non supportato: ${target}` }, { status: 404 });
+    return NextResponse.json({ error: `Unsupported target: ${target}` }, { status: 404 });
   }
 
-  const result = await runCommand("pip", ["show", runtime.packageName]);
-  const installed = result.exitCode === 0;
-  runtimeManager.setInstalledFlag(target as RuntimeId, installed);
+  let installed = false;
+  let output = "";
 
-  let configExists = false;
-  try {
-    await fs.access(runtime.configPath);
-    configExists = true;
-  } catch (_error) {
-    configExists = false;
+  if (target === "mockpt") {
+    installed = await fileExists(getMockPtPythonPath());
+    runtimeManager.setInstalledFlag(target as RuntimeId, installed);
+    output = installed
+      ? `Virtual environment ready at ${getMockPtPythonPath()}`
+      : `Virtual environment not initialized. Run Initialize to create ${mockPtVenvDir}.`;
+  } else if (runtime.packageName) {
+    const result = await runCommand("pip", ["show", runtime.packageName]);
+    installed = result.exitCode === 0;
+    runtimeManager.setInstalledFlag(target as RuntimeId, installed);
+    output = result.stdout || result.stderr;
+  } else {
+    runtimeManager.setInstalledFlag(target as RuntimeId, false);
   }
 
+  runtimeManager.ensureConfigPath(target as RuntimeId, runtime.configPath);
   const snapshot = runtimeManager.getSnapshot(target as RuntimeId);
+  const effectiveConfigPath =
+    snapshot.configPath && snapshot.configPath.length > 0
+      ? snapshot.configPath
+      : runtime.configPath;
+  const configExists = await fileExists(effectiveConfigPath);
 
   return NextResponse.json({
     installed,
-    output: result.stdout || result.stderr,
-    configPath: runtime.configPath,
+    output,
+    configPath: effectiveConfigPath,
     configExists,
     running: snapshot.running,
     statusMessage: snapshot.statusMessage,
@@ -121,7 +169,7 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
   const { target } = await params;
   const runtime = getRuntime(target);
   if (!runtime) {
-    return NextResponse.json({ error: `Target non supportato: ${target}` }, { status: 404 });
+    return NextResponse.json({ error: `Unsupported target: ${target}` }, { status: 404 });
   }
 
   const body = await request.json();
@@ -132,6 +180,40 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
   }
 
   if (action === "init") {
+    if (target === "mockpt") {
+      const posixCommand = `python3 -m venv '${mockPtVenvDir}' && source '${path.join(
+        mockPtVenvDir,
+        "bin",
+        "activate"
+      )}' && pip install -r '${mockPtRequirementsPath}'`;
+      const windowsCommand = `python -m venv "${mockPtVenvDir}" && "${path.join(
+        mockPtVenvDir,
+        "Scripts",
+        "pip.exe"
+      )}" install -r "${mockPtRequirementsPath}"`;
+      const installResult =
+        process.platform === "win32"
+          ? await runCommand("cmd", ["/c", windowsCommand])
+          : await runCommand("bash", ["-lc", posixCommand]);
+      const success = installResult.exitCode === 0;
+      runtimeManager.setInstalledFlag(target as RuntimeId, success);
+
+      return NextResponse.json({
+        success,
+        installed: success,
+        stdout: installResult.stdout,
+        stderr: installResult.stderr,
+        exitCode: installResult.exitCode,
+      });
+    }
+
+    if (!runtime.wheelPath) {
+      return NextResponse.json(
+        { error: "Installation is not configured for this runtime." },
+        { status: 400 }
+      );
+    }
+
     const installResult = await runCommand("pip", ["install", runtime.wheelPath]);
     const success = installResult.exitCode === 0;
     if (success) {
@@ -148,21 +230,52 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
   }
 
   if (action === "run") {
-    try {
-      await fs.access(runtime.configPath);
-    } catch (_error) {
+    let requestedConfigPath: string | null = null;
+    if (typeof body.configPath === "string" && body.configPath.length > 0) {
+      requestedConfigPath = path.isAbsolute(body.configPath)
+        ? body.configPath
+        : path.join(projectRoot, body.configPath);
+    }
+
+    const configPathToUse = requestedConfigPath ?? runtime.configPath;
+
+    if (target === "mockpt") {
+      const normalized = path.normalize(configPathToUse);
+      if (!normalized.startsWith(mockPtConfDir)) {
+        return NextResponse.json(
+          { error: "Invalid configuration path. Use a file under MockPT/conf." },
+          { status: 400 }
+        );
+      }
+
+      const venvReady = await fileExists(getMockPtPythonPath());
+      if (!venvReady) {
+        return NextResponse.json(
+          { error: "MockPT is not initialized. Run Initialize to create the virtual environment." },
+          { status: 400 }
+        );
+      }
+    }
+
+    const configExists = await fileExists(configPathToUse);
+    if (!configExists) {
       return NextResponse.json(
-        { error: "Config non trovato. Salva prima la configurazione dalla home." },
+        { error: "Configuration file not found. Save it from the configuration page first." },
         { status: 400 }
       );
     }
 
-    const result = runtimeManager.startRuntime(target as RuntimeId, runtime, projectRoot);
+    const result = runtimeManager.startRuntime(
+      target as RuntimeId,
+      runtime,
+      projectRoot,
+      configPathToUse
+    );
     if (!result.ok) {
       return NextResponse.json({ error: result.error ?? "Processo già in esecuzione." }, { status: 409 });
     }
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ success: true, configPath: configPathToUse });
   }
 
   if (action === "stop") {
@@ -174,5 +287,5 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
     return NextResponse.json({ success: true });
   }
 
-  return NextResponse.json({ error: `Azione non supportata: ${action}` }, { status: 400 });
+  return NextResponse.json({ error: `Unsupported action: ${action}` }, { status: 400 });
 }

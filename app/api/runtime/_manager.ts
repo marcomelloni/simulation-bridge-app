@@ -4,10 +4,12 @@ import type { ChildProcessWithoutNullStreams } from "child_process";
 import type { RuntimeId } from "@/lib/runtimes";
 
 export interface RuntimeDefinition {
-  packageName: string;
-  wheelPath: string;
+  packageName?: string;
+  wheelPath?: string;
   configPath: string;
-  spawnCommand: (configPath: string) => { command: string; args: string[] };
+  spawnCommand: (
+    configPath: string
+  ) => { command: string; args: string[]; cwd?: string };
 }
 
 export interface RuntimeLogEntry {
@@ -23,6 +25,7 @@ export interface RuntimeSnapshot {
   installed: boolean;
   statusMessage: string;
   lastExitCode: number | null;
+  configPath: string;
 }
 
 export type RuntimeEvent =
@@ -42,6 +45,7 @@ interface RuntimeState {
   installed: boolean;
   statusMessage: string;
   lastExitCode: number | null;
+  lastConfigPath: string;
 }
 
 const LOG_LIMIT = 1000;
@@ -61,6 +65,7 @@ class RuntimeManager {
         installed: false,
         statusMessage: "",
         lastExitCode: null,
+        lastConfigPath: "",
       };
       this.states.set(id, state);
     }
@@ -75,6 +80,7 @@ class RuntimeManager {
       installed: state.installed,
       statusMessage: state.statusMessage,
       lastExitCode: state.lastExitCode,
+      configPath: state.lastConfigPath,
     };
   }
 
@@ -87,6 +93,13 @@ class RuntimeManager {
         id,
         installed ? "Package installed." : "Package not installed."
       );
+    }
+  }
+
+  ensureConfigPath(id: RuntimeId, configPath: string) {
+    const state = this.ensureState(id);
+    if (!state.lastConfigPath) {
+      state.lastConfigPath = configPath;
     }
   }
 
@@ -134,17 +147,25 @@ class RuntimeManager {
     });
   }
 
-  startRuntime(id: RuntimeId, runtime: RuntimeDefinition, cwd: string) {
+  startRuntime(
+    id: RuntimeId,
+    runtime: RuntimeDefinition,
+    cwd: string,
+    configPath: string
+  ) {
     const state = this.ensureState(id);
     if (state.process) {
       return { ok: false, error: "Process already running." };
     }
 
-    const { command, args } = runtime.spawnCommand(runtime.configPath);
+    const resolvedConfigPath =
+      configPath && configPath.length > 0 ? configPath : runtime.configPath;
+    const { command, args, cwd: runtimeCwd } =
+      runtime.spawnCommand(resolvedConfigPath);
 
     try {
       const child = spawn(command, args, {
-        cwd,
+        cwd: runtimeCwd ?? cwd,
         env: process.env,
         shell: true,
       });
@@ -152,11 +173,14 @@ class RuntimeManager {
       state.process = child;
       state.running = true;
       state.lastExitCode = null;
+      state.lastConfigPath = resolvedConfigPath;
       this.emitEvent(id, { type: "snapshot", payload: this.getSnapshot(id) });
 
       this.appendLog(id, {
         source: "system",
-        chunk: `Execution started: ${command} ${args.join(" ")}`,
+        chunk: `Execution started: ${command} ${args.join(
+          " "
+        )} (config: ${resolvedConfigPath})`,
       });
       this.emitStatus(id, "Process started");
       this.emitEvent(id, {
